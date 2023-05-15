@@ -31,11 +31,11 @@ public class MFiController {
     @GetMapping("/download")
     public ResponseEntity<byte[]> downloadExcel(@RequestParam @NotNull @Min(1) @Max(10000) Integer requestedAuthEntityCount) {
         byte[] bytes = mFiService.getBytes(requestedAuthEntityCount);
-        String filename = String.join("-", "MFi", LocalDateTime.now().toString(), ".xlsx");
+        String filename = String.join("-", "MFi", LocalDateTime.now().toString());
         return ResponseEntity
                 .ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=" + filename)
+                .header("Content-Disposition", "attachment; filename=" + filename + ".xlsx")
                 .body(bytes);
     }
 
