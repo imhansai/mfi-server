@@ -11,6 +11,8 @@ import org.springframework.validation.annotation.Validated;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * MFi 根据 ppid 和 requested_auth_entity_count 导出 excel
@@ -24,8 +26,16 @@ public class MfiService {
 
     private final AuthEntitiesRequestService authEntitiesRequestService;
 
-    public MfiService(AuthEntitiesRequestService authEntitiesRequestService) {
+    private final FileNameRequestService fileNameRequestService;
+
+    private final FileDownloadService fileDownloadService;
+
+    public MfiService(AuthEntitiesRequestService authEntitiesRequestService,
+                      FileNameRequestService fileNameRequestService,
+                      FileDownloadService fileDownloadService) {
         this.authEntitiesRequestService = authEntitiesRequestService;
+        this.fileNameRequestService = fileNameRequestService;
+        this.fileDownloadService = fileDownloadService;
     }
 
     public byte[] getBytes(Integer requestedAuthEntityCount) {
@@ -37,11 +47,24 @@ public class MfiService {
             throw new RuntimeException("Auth Entities Request 请求异常! " + e.getMessage(), e);
         }
 
-        // api/v1.0/external/authEntities/{request_id}
+        // File Name Request
+        List<String> fileNameList;
+        try {
+            fileNameList = fileNameRequestService.fileNameRequest(requestId);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("File Name Request 请求异常! " + e.getMessage(), e);
+        }
 
-        // api/v1.0/external/authEntities/{request_id}/{file_name}
+        // File Download
+        List<Path> filePathList;
+        try {
+            filePathList = fileDownloadService.fileDownload(requestId, fileNameList);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("File Download 请求异常! " + e.getMessage(), e);
+        }
 
-        // api/v1.0/external/bulk/usedAuthEntities
+        // Register Used Auth Entity during Factory Provisioning
+
 
         Workbook workbook = getWorkbook();
         // 将Workbook写入一个ByteArrayOutputStream中

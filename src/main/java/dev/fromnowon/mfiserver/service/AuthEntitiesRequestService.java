@@ -62,15 +62,15 @@ public class AuthEntitiesRequestService {
 
         // 获取响应状态码
         int statusCode = response.statusCode();
-        log.debug("Status Code: {}", statusCode);
+        log.debug("Auth Entities Request Status Code: {}", statusCode);
 
         // 获取响应头
         HttpHeaders headers = response.headers();
-        headers.map().forEach((key, value) -> log.debug("{}: {}", key, value));
+        headers.map().forEach((key, value) -> log.debug("Auth Entities Request {}: {}", key, value));
 
         // 获取响应体
         String responseBody = response.body();
-        log.debug("Response Body: {}", responseBody);
+        log.debug("Auth Entities Request Response Body: {}", responseBody);
 
         AuthEntitiesRequestResponse authEntitiesRequestResponse = objectMapper.readValue(responseBody, AuthEntitiesRequestResponse.class);
         return authEntitiesRequestResponse.getRequestId();
