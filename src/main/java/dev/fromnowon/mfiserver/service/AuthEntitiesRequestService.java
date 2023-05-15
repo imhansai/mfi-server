@@ -3,6 +3,7 @@ package dev.fromnowon.mfiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fromnowon.mfiserver.config.MfiProperties;
 import dev.fromnowon.mfiserver.request.AuthEntitiesRequest;
+import dev.fromnowon.mfiserver.response.AuthEntitiesRequestResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -38,7 +39,7 @@ public class AuthEntitiesRequestService {
         this.mfiProperties = mfiProperties;
     }
 
-    public void authEntitiesRequest(Integer requestedAuthEntityCount) throws IOException, InterruptedException {
+    public String authEntitiesRequest(Integer requestedAuthEntityCount) throws IOException, InterruptedException {
         String url = "https://swa.apple.com:443/api/v1.0/external/authEntityRequests";
 
         AuthEntitiesRequest authEntitiesRequest = new AuthEntitiesRequest();
@@ -70,6 +71,9 @@ public class AuthEntitiesRequestService {
         // 获取响应体
         String responseBody = response.body();
         log.debug("Response Body: {}", responseBody);
+
+        AuthEntitiesRequestResponse authEntitiesRequestResponse = objectMapper.readValue(responseBody, AuthEntitiesRequestResponse.class);
+        return authEntitiesRequestResponse.getRequestId();
     }
 
 }

@@ -30,8 +30,9 @@ public class MfiService {
 
     public byte[] getBytes(Integer requestedAuthEntityCount) {
         // Auth Entities Request
+        String requestId;
         try {
-            authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
+            requestId = authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Auth Entities Request 请求异常! " + e.getMessage(), e);
         }
