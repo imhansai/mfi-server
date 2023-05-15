@@ -11,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
@@ -63,10 +62,6 @@ public class AuthEntitiesRequestService {
         // 获取响应状态码
         int statusCode = response.statusCode();
         log.debug("Auth Entities Request Status Code: {}", statusCode);
-
-        // 获取响应头
-        HttpHeaders headers = response.headers();
-        headers.map().forEach((key, value) -> log.debug("Auth Entities Request {}: {}", key, value));
 
         // 获取响应体
         String responseBody = response.body();

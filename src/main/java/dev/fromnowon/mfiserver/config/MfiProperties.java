@@ -31,5 +31,10 @@ public class MfiProperties {
      */
     private String alias;
 
+    /**
+     * Product Data
+     */
+    private String productData;
+
 }
 
