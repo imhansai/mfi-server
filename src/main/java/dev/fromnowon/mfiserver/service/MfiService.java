@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dev.fromnowon.mfiserver.config.MfiProperties;
 import dev.fromnowon.mfiserver.dto.TokenDataDTO;
+import dev.fromnowon.mfiserver.request.UsedAuthEntitiesRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -19,9 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MFi 根据 ppid 和 requested_auth_entity_count 导出 excel
@@ -39,15 +39,19 @@ public class MfiService {
 
     private final FileDownloadService fileDownloadService;
 
+    private final UsedAuthEntitiesService usedAuthEntitiesService;
+
     private final MfiProperties mfiProperties;
 
     public MfiService(AuthEntitiesRequestService authEntitiesRequestService,
                       FileNameRequestService fileNameRequestService,
                       FileDownloadService fileDownloadService,
+                      UsedAuthEntitiesService usedAuthEntitiesService,
                       MfiProperties mfiProperties) {
         this.authEntitiesRequestService = authEntitiesRequestService;
         this.fileNameRequestService = fileNameRequestService;
         this.fileDownloadService = fileDownloadService;
+        this.usedAuthEntitiesService = usedAuthEntitiesService;
         this.mfiProperties = mfiProperties;
     }
 
@@ -58,6 +62,13 @@ public class MfiService {
             requestId = authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Auth Entities Request 请求异常! " + e.getMessage(), e);
+        }
+
+        // 获得 requestId 后立即请求无法获得文件名称，所以等一下
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("在睡觉时被打断! " + e.getMessage(), e);
         }
 
         // File Name Request
@@ -84,10 +95,15 @@ public class MfiService {
             throw new RuntimeException("生成 token 相关数据异常! " + e.getMessage(), e);
         }
 
-        // 构造方法参数
+        // 构造注册方法参数
+        UsedAuthEntitiesRequest usedAuthEntitiesRequest = getUsedAuthEntitiesRequest(tokenDataDTOList);
 
         // Register Used Auth Entity during Factory Provisioning
-
+        try {
+            usedAuthEntitiesService.usedAuthEntities(usedAuthEntitiesRequest);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("注册 token 异常! " + e.getMessage(), e);
+        }
 
         Workbook workbook;
         try {
@@ -102,6 +118,19 @@ public class MfiService {
         } catch (IOException e) {
             throw new RuntimeException("把 workbook 写到输出流中异常!" + e.getMessage(), e);
         }
+    }
+
+    private UsedAuthEntitiesRequest getUsedAuthEntitiesRequest(List<TokenDataDTO> tokenDataDTOList) {
+        UsedAuthEntitiesRequest usedAuthEntitiesRequest = new UsedAuthEntitiesRequest();
+        usedAuthEntitiesRequest.setPpid(mfiProperties.getPpid());
+        Map<String, String> authEntities = new HashMap<>();
+        for (TokenDataDTO tokenDataDTO : tokenDataDTOList) {
+            String token = tokenDataDTO.getToken();
+            String uuid = tokenDataDTO.getUuid();
+            authEntities.put(token, uuid);
+        }
+        usedAuthEntitiesRequest.setAuthEntities(List.of(authEntities));
+        return usedAuthEntitiesRequest;
     }
 
     public List<TokenDataDTO> generateTokenDataDTOList(List<Path> filePathList) throws IOException {
