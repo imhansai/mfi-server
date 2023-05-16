@@ -160,6 +160,15 @@ public class MfiService {
     }
 
     public Workbook getWorkbook(List<TokenDataDTO> tokenDataDTOList) throws IllegalAccessException {
+        // 为了 Excel 表头
+        TokenDataDTO firsttokenDataDTO = new TokenDataDTO();
+        firsttokenDataDTO.setPpid("ppid");
+        firsttokenDataDTO.setToken("Token ID");
+        firsttokenDataDTO.setTokenBase64("Base64-encoded Token");
+        firsttokenDataDTO.setTokenHex("CRC32 in HEX");
+        firsttokenDataDTO.setUuid("UUID");
+        firsttokenDataDTO.setProductData("Product Data");
+        tokenDataDTOList.add(0, firsttokenDataDTO);
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Sheet1");
         for (int i = 0; i < tokenDataDTOList.size(); i++) {
