@@ -21,10 +21,9 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
- * MFi 根据 ppid 和 requested_auth_entity_count 导出 excel
+ * 根据 ppid 导出 excel
  *
  * @author hansai
  */
@@ -56,19 +55,13 @@ public class MfiService {
     }
 
     public byte[] getBytes(Integer requestedAuthEntityCount) {
+        log.debug("请求获取 {} 个token", requestedAuthEntityCount);
         // Auth Entities Request
         String requestId;
         try {
             requestId = authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException("Auth Entities Request 请求异常! " + e.getMessage(), e);
-        }
-
-        // 获得 requestId 后立即请求无法获得文件名称，所以等一下
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("在睡觉时被打断! " + e.getMessage(), e);
         }
 
         // File Name Request

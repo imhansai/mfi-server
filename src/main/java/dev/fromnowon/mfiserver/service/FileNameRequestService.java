@@ -3,6 +3,7 @@ package dev.fromnowon.mfiserver.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fromnowon.mfiserver.response.FileNameRequestResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -33,6 +34,7 @@ public class FileNameRequestService {
         this.objectMapper = objectMapper;
     }
 
+    @Retryable
     public List<String> fileNameRequest(String requestId) throws IOException, InterruptedException {
         String baseUrl = "https://swa.apple.com/api/v1.0/external/authEntities/";
         String url = baseUrl + requestId;
@@ -44,10 +46,16 @@ public class FileNameRequestService {
                 .build();
 
         HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        log.debug("File Name Request Response Code: {}", response.statusCode());
-        log.debug("File Name Request Response Body: {}", response.body());
+        int statusCode = response.statusCode();
+        log.debug("File Name Request Response Code: {}", statusCode);
+        String responseBody = response.body();
+        log.debug("File Name Request Response Body: {}", responseBody);
 
-        FileNameRequestResponse fileNameRequestResponse = objectMapper.readValue(response.body(), FileNameRequestResponse.class);
+        if (statusCode < 200 || statusCode >= 400) {
+            throw new RuntimeException("File Name Request 请求失败，状态码：" + statusCode + " 响应体：" + responseBody);
+        }
+
+        FileNameRequestResponse fileNameRequestResponse = objectMapper.readValue(responseBody, FileNameRequestResponse.class);
         return fileNameRequestResponse.getFileName();
     }
 
