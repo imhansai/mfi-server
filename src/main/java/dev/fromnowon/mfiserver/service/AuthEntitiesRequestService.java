@@ -2,6 +2,7 @@ package dev.fromnowon.mfiserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fromnowon.mfiserver.config.MfiProperties;
+import dev.fromnowon.mfiserver.exception.SystemException;
 import dev.fromnowon.mfiserver.request.AuthEntitiesRequest;
 import dev.fromnowon.mfiserver.response.AuthEntitiesRequestResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,15 @@ public class AuthEntitiesRequestService {
         this.mfiProperties = mfiProperties;
     }
 
-    public String authEntitiesRequest(Integer requestedAuthEntityCount) throws IOException, InterruptedException {
+    public String authEntitiesRequest(Integer requestedAuthEntityCount) {
+        try {
+            return getRequestId(requestedAuthEntityCount);
+        } catch (IOException | InterruptedException e) {
+            throw new SystemException("Auth Entities Request Error" + e.getMessage(), e);
+        }
+    }
+
+    private String getRequestId(Integer requestedAuthEntityCount) throws IOException, InterruptedException {
         String url = "https://swa.apple.com:443/api/v1.0/external/authEntityRequests";
 
         AuthEntitiesRequest authEntitiesRequest = new AuthEntitiesRequest();

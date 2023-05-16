@@ -1,8 +1,11 @@
 package dev.fromnowon.mfiserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.fromnowon.mfiserver.exception.SystemException;
 import dev.fromnowon.mfiserver.response.FileNameRequestResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -34,8 +37,16 @@ public class FileNameRequestService {
         this.objectMapper = objectMapper;
     }
 
-    @Retryable
-    public List<String> fileNameRequest(String requestId) throws IOException, InterruptedException {
+    @Retryable(backoff = @Backoff(delay = 500, multiplier = 1, maxDelay = 5000))
+    public List<String> fileNameRequest(String requestId) {
+        try {
+            return getFileNameList(requestId);
+        } catch (IOException | InterruptedException e) {
+            throw new SystemException("File Name Request Error" + e.getMessage(), e);
+        }
+    }
+
+    private List<String> getFileNameList(String requestId) throws IOException, InterruptedException {
         String baseUrl = "https://swa.apple.com/api/v1.0/external/authEntities/";
         String url = baseUrl + requestId;
 
@@ -51,7 +62,7 @@ public class FileNameRequestService {
         String responseBody = response.body();
         log.debug("File Name Request Response Body: {}", responseBody);
 
-        if (statusCode < 200 || statusCode >= 400) {
+        if (statusCode < HttpStatus.OK.value() || statusCode >= HttpStatus.BAD_REQUEST.value()) {
             throw new RuntimeException("File Name Request 请求失败，状态码：" + statusCode + " 响应体：" + responseBody);
         }
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import dev.fromnowon.mfiserver.config.MfiProperties;
 import dev.fromnowon.mfiserver.dto.TokenDataDTO;
+import dev.fromnowon.mfiserver.exception.SystemException;
 import dev.fromnowon.mfiserver.request.UsedAuthEntitiesRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -57,53 +58,18 @@ public class MfiService {
     public byte[] getBytes(Integer requestedAuthEntityCount) {
         log.debug("请求获取 {} 个token", requestedAuthEntityCount);
         // Auth Entities Request
-        String requestId;
-        try {
-            requestId = authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("Auth Entities Request 请求异常! " + e.getMessage(), e);
-        }
-
+        String requestId = authEntitiesRequestService.authEntitiesRequest(requestedAuthEntityCount);
         // File Name Request
-        List<String> fileNameList;
-        try {
-            fileNameList = fileNameRequestService.fileNameRequest(requestId);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("File Name Request 请求异常! " + e.getMessage(), e);
-        }
-
+        List<String> fileNameList = fileNameRequestService.fileNameRequest(requestId);
         // File Download
-        List<Path> filePathList;
-        try {
-            filePathList = fileDownloadService.fileDownload(requestId, fileNameList);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("File Download 请求异常! " + e.getMessage(), e);
-        }
-
+        List<Path> filePathList = fileDownloadService.fileDownload(requestId, fileNameList);
         // 获取生成 ppid、Token ID、Base64-encoded Token、CRC32 in HEX、UUID(需要生成)、Product Data
-        List<TokenDataDTO> tokenDataDTOList;
-        try {
-            tokenDataDTOList = generateTokenDataDTOList(filePathList);
-        } catch (IOException e) {
-            throw new RuntimeException("生成 token 相关数据异常! " + e.getMessage(), e);
-        }
-
+        List<TokenDataDTO> tokenDataDTOList = generateTokenDataDTOList(filePathList);
         // 构造注册方法参数
         UsedAuthEntitiesRequest usedAuthEntitiesRequest = getUsedAuthEntitiesRequest(tokenDataDTOList);
-
         // Register Used Auth Entity during Factory Provisioning
-        try {
-            usedAuthEntitiesService.usedAuthEntities(usedAuthEntitiesRequest);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException("注册 token 异常! " + e.getMessage(), e);
-        }
-
-        Workbook workbook;
-        try {
-            workbook = getWorkbook(tokenDataDTOList);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("生成 workbook 异常! " + e.getMessage(), e);
-        }
+        usedAuthEntitiesService.usedAuthEntities(usedAuthEntitiesRequest);
+        Workbook workbook = getWorkbook(tokenDataDTOList);
         // 将Workbook写入一个ByteArrayOutputStream中
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             workbook.write(outputStream);
@@ -126,7 +92,15 @@ public class MfiService {
         return usedAuthEntitiesRequest;
     }
 
-    public List<TokenDataDTO> generateTokenDataDTOList(List<Path> filePathList) throws IOException {
+    public List<TokenDataDTO> generateTokenDataDTOList(List<Path> filePathList) {
+        try {
+            return getTokenDataDTOList(filePathList);
+        } catch (IOException e) {
+            throw new SystemException("生成 token 相关数据异常! " + e.getMessage(), e);
+        }
+    }
+
+    private List<TokenDataDTO> getTokenDataDTOList(List<Path> filePathList) throws IOException {
         List<TokenDataDTO> tokenDataDTOList = new ArrayList<>();
         for (Path filePath : filePathList) {
             File csvFile = filePath.toFile();
@@ -152,7 +126,15 @@ public class MfiService {
         return tokenDataDTOList;
     }
 
-    public Workbook getWorkbook(List<TokenDataDTO> tokenDataDTOList) throws IllegalAccessException {
+    public Workbook getWorkbook(List<TokenDataDTO> tokenDataDTOList) {
+        try {
+            return generateWorkbook(tokenDataDTOList);
+        } catch (IllegalAccessException e) {
+            throw new SystemException("生成 workbook Error" + e.getMessage(), e);
+        }
+    }
+
+    private Workbook generateWorkbook(List<TokenDataDTO> tokenDataDTOList) throws IllegalAccessException {
         // 为了 Excel 表头
         TokenDataDTO firsttokenDataDTO = new TokenDataDTO();
         firsttokenDataDTO.setPpid("ppid");

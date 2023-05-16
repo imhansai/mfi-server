@@ -1,6 +1,7 @@
 package dev.fromnowon.mfiserver.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.fromnowon.mfiserver.exception.SystemException;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -32,13 +33,21 @@ public class FileDownloadService {
 
     private final ResourceLoader resourceLoader;
 
-    public FileDownloadService(HttpClient httpClient, ObjectMapper objectMapper,
+    public FileDownloadService(HttpClient httpClient,
                                ResourceLoader resourceLoader) {
         this.httpClient = httpClient;
         this.resourceLoader = resourceLoader;
     }
 
-    public List<Path> fileDownload(String requestId, List<String> fileNameList) throws IOException, InterruptedException {
+    public List<Path> fileDownload(String requestId, @NotEmpty List<String> fileNameList) {
+        try {
+            return getFilePathList(requestId, fileNameList);
+        } catch (IOException | InterruptedException e) {
+            throw new SystemException("File Download Error" + e.getMessage(), e);
+        }
+    }
+
+    private List<Path> getFilePathList(String requestId, List<String> fileNameList) throws IOException, InterruptedException {
         List<Path> filePathList = new ArrayList<>();
         for (String fileName : fileNameList) {
             String baseUrl = "https://swa.apple.com/api/v1.0/external/authEntities/";

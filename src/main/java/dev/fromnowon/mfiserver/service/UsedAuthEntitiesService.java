@@ -1,6 +1,7 @@
 package dev.fromnowon.mfiserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.fromnowon.mfiserver.exception.SystemException;
 import dev.fromnowon.mfiserver.request.UsedAuthEntitiesRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,15 @@ public class UsedAuthEntitiesService {
         this.objectMapper = objectMapper;
     }
 
-    public void usedAuthEntities(UsedAuthEntitiesRequest usedAuthEntitiesRequest) throws IOException, InterruptedException {
+    public void usedAuthEntities(UsedAuthEntitiesRequest usedAuthEntitiesRequest) {
+        try {
+            execute(usedAuthEntitiesRequest);
+        } catch (IOException | InterruptedException e) {
+            throw new SystemException("注册服务 Error" + e.getMessage(), e);
+        }
+    }
+
+    private void execute(UsedAuthEntitiesRequest usedAuthEntitiesRequest) throws IOException, InterruptedException {
         String url = "https://swa.apple.com/api/v1.0/external/bulk/usedAuthEntities";
         String requestBodyJson = objectMapper.writeValueAsString(usedAuthEntitiesRequest);
         HttpRequest request = HttpRequest.newBuilder()
