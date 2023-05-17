@@ -35,3 +35,4 @@ build/
 /src/main/resources/mfi/
 /src/main/resources/application-dev.properties
 mfi.log
+mfi.log.*
