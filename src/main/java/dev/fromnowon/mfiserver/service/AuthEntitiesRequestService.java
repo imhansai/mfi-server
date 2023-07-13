@@ -6,6 +6,7 @@ import dev.fromnowon.mfiserver.exception.SystemException;
 import dev.fromnowon.mfiserver.request.AuthEntitiesRequest;
 import dev.fromnowon.mfiserver.response.AuthEntitiesRequestResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -75,6 +76,10 @@ public class AuthEntitiesRequestService {
         // 获取响应体
         String responseBody = response.body();
         log.debug("Auth Entities Request Response Body: {}", responseBody);
+
+        if (statusCode < HttpStatus.OK.value() || statusCode >= HttpStatus.BAD_REQUEST.value()) {
+            throw new RuntimeException("Auth Entities Request 请求失败，状态码：" + statusCode + " 响应体：" + responseBody);
+        }
 
         AuthEntitiesRequestResponse authEntitiesRequestResponse = objectMapper.readValue(responseBody, AuthEntitiesRequestResponse.class);
         return authEntitiesRequestResponse.getRequestId();

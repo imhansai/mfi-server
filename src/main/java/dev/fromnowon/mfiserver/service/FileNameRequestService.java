@@ -37,7 +37,7 @@ public class FileNameRequestService {
         this.objectMapper = objectMapper;
     }
 
-    @Retryable(backoff = @Backoff(delay = 3000, multiplier = 2))
+    @Retryable(backoff = @Backoff(delay = 10000))
     public List<String> fileNameRequest(String requestId) {
         try {
             return getFileNameList(requestId);
