@@ -34,8 +34,11 @@ dependencies {
     implementation("org.springframework:spring-aspects")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv")
     implementation(libs.org.apache.poi.poi.ooxml)
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 }
 
 group = "dev.fromnowon"
