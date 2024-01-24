@@ -12,6 +12,11 @@ plugins {
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.spring") version "1.9.22"
     kotlin("plugin.jpa") version "1.9.22"
+    kotlin("kapt") version "1.9.22"
+}
+
+kapt {
+    keepJavacAnnotationProcessors = true
 }
 
 repositories {
@@ -37,8 +42,19 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     annotationProcessor("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok-mapstruct-binding:0.2.0")
-    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    kapt("org.projectlombok:lombok-mapstruct-binding:0.2.0")
+    kapt("org.mapstruct:mapstruct-processor:1.5.5.Final")
+}
+
+configurations {
+    compileOnly {
+        extendsFrom(configurations.annotationProcessor.get())
+    }
+    kapt(
+        action = {
+            extendsFrom(configurations.annotationProcessor.get())
+        }
+    )
 }
 
 group = "dev.fromnowon"
