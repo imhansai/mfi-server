@@ -5,13 +5,8 @@
 plugins {
     `java-library`
     `maven-publish`
-    kotlin("kapt") version "1.9.22"
     id("org.springframework.boot") version "3.0.6"
     id("io.spring.dependency-management") version "1.1.4"
-}
-
-kapt {
-    keepJavacAnnotationProcessors = true
 }
 
 repositories {
